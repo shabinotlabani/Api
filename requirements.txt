@@ -1,5 +1,5 @@
 flask
 selenium
 gunicorn
-undetected-chromedriver
+chromedriver-autoinstaller
 setuptools
