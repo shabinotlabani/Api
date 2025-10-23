@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "✅ VerifikoMakinen API është aktiv me Chrome portable!"
+    return "✅ VerifikoMakinen API është aktiv (Render Chrome portable)."
 
 @app.route("/check-vin")
 def check_vin():
@@ -16,42 +16,38 @@ def check_vin():
         return jsonify({"error": "Mungon parametri VIN"}), 400
 
     try:
-        chrome_options = Options()
-        chrome_options.add_argument("--headless=new")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080")
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920,1080")
 
-        # Krijo një instance të Chrome që shkarkohet automatikisht
-        driver = uc.Chrome(options=chrome_options)
+        # Mos vendos binary_location — uc e menaxhon vetë
+        driver = uc.Chrome(options=options, use_subprocess=True)
 
-        # Hap faqen koreane
         url = "https://www.carhistory.or.kr/search/carhistory/freeSearch.car"
         driver.get(url)
         time.sleep(3)
 
-        # Fut VIN
         vin_input = driver.find_element("id", "carbodynum")
         vin_input.clear()
         vin_input.send_keys(vin)
 
-        # Kliko butonin “Search”
         search_button = driver.find_element("css selector", "button.btn.btn-black")
         search_button.click()
         time.sleep(5)
 
-        # Merr tekstin e faqes
-        body_text = driver.page_source.lower()
+        body = driver.page_source.lower()
+        driver.quit()
 
-        if "no history on the flood damage" in body_text:
+        if "no history on the flood damage" in body:
             result = "Nuk ka histori dëmi nga përmbytja."
-        elif "flood" in body_text:
+        elif "flood" in body:
             result = "Mund të ketë histori përmbytjeje."
         else:
-            result = "Rezultati nuk u përcaktua saktë."
+            result = "Rezultati nuk u përcaktua."
 
-        driver.quit()
         return jsonify({"vin": vin, "result": result})
 
     except Exception as e:
