@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
 from bs4 import BeautifulSoup
-import time
 
 app = Flask(__name__)
 
@@ -12,26 +11,46 @@ def check_vin():
         return jsonify({"error": "VIN mungon"}), 400
 
     try:
-        # Simulo kërkesë si përdorues browseri
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/141.0.0.0 Safari/537.36",
+            "Referer": "https://www.carhistory.or.kr/main.car"
         }
 
+        session = requests.Session()
+
+        # 1️⃣ Vendos gjuhën në EN (sikur e ndryshon manualisht)
+        session.post(
+            "https://www.carhistory.or.kr/main.car",
+            data={"lang": "en"},
+            headers=headers,
+            timeout=10
+        )
+
+        # 2️⃣ Simulo klikimin “Agree to all the use of the service”
+        session.cookies.set("search_agree", "Y", domain="www.carhistory.or.kr")
+
+        # 3️⃣ Dërgo kërkesën reale për kontrollin e VIN
         url = "https://www.carhistory.or.kr/search/carhistory/freeSearch.car"
-        data = {"carbodynum": vin, "lang": "en"}
+        data = {"carnum": vin, "lang": "en"}
+        response = session.post(url, headers=headers, data=data, timeout=20)
 
-        # Dërgo kërkesën
-        response = requests.post(url, headers=headers, data=data, timeout=15)
-        html = response.text
-        soup = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
+        text = soup.get_text(" ", strip=True).lower()
 
-        # Lexo rezultatet bazë (mund ta rafinojmë më vonë)
-        result_text = soup.get_text().strip()[:300]
+        # 4️⃣ Analizo rezultatin sipas tekstit të faqes
+        if "no history on the flood damage accident" in text:
+            result = "✅ Nuk ka histori përmbytjeje"
+        elif "flood" in text:
+            result = "⚠️ Ka histori përmbytjeje"
+        else:
+            result = "ℹ️ Nuk u gjet informacion i qartë"
 
         return jsonify({
             "vin": vin,
-            "result": "Data u mor me sukses",
-            "preview": result_text
+            "result": result,
+            "status": "success"
         })
 
     except Exception as e:
