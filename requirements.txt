@@ -1,6 +1,5 @@
 flask
 selenium
-webdriver-manager
 gunicorn
 undetected-chromedriver
 setuptools
