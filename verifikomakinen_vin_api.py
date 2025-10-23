@@ -36,13 +36,13 @@ def check_vin():
 
         # 🔍 Kontrollo rastet
         if "error in the vin" in text:
-            result = "❌ Numri VIN është i pasaktë"
+            result = "❌ Numri VIN eshte i pasakte"
         elif "no history on the flood damage accident" in text:
             result = "✅ Nuk ka histori përmbytjeje"
         elif "flood" in text or "damage" in text:
-            result = "⚠️ Ka histori përmbytjeje"
+            result = "⚠️ Ka histori permbytjeje"
         else:
-            result = "ℹ️ Nuk u gjet informacion i qartë"
+            result = "ℹ️ Nuk u gjet informacion i qarte"
 
         return jsonify({
             "vin": vin,
@@ -56,3 +56,4 @@ def check_vin():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
