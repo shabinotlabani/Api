@@ -19,19 +19,14 @@ def check_vin():
         }
 
         session = requests.Session()
-
-        # 1️⃣ Vendos gjuhën në EN (sikur e ndryshon manualisht)
         session.post(
             "https://www.carhistory.or.kr/main.car",
             data={"lang": "en"},
             headers=headers,
             timeout=10
         )
-
-        # 2️⃣ Simulo klikimin “Agree to all the use of the service”
         session.cookies.set("search_agree", "Y", domain="www.carhistory.or.kr")
 
-        # 3️⃣ Dërgo kërkesën reale për kontrollin e VIN
         url = "https://www.carhistory.or.kr/search/carhistory/freeSearch.car"
         data = {"carnum": vin, "lang": "en"}
         response = session.post(url, headers=headers, data=data, timeout=20)
@@ -39,10 +34,12 @@ def check_vin():
         soup = BeautifulSoup(response.text, "html.parser")
         text = soup.get_text(" ", strip=True).lower()
 
-        # 4️⃣ Analizo rezultatin sipas tekstit të faqes
-        if "no history on the flood damage accident" in text:
+        # 🔍 Kontrollo rastet
+        if "error in the vin" in text:
+            result = "❌ Numri VIN është i pasaktë"
+        elif "no history on the flood damage accident" in text:
             result = "✅ Nuk ka histori përmbytjeje"
-        elif "flood" in text:
+        elif "flood" in text or "damage" in text:
             result = "⚠️ Ka histori përmbytjeje"
         else:
             result = "ℹ️ Nuk u gjet informacion i qartë"
