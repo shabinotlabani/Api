@@ -2,5 +2,4 @@ flask
 selenium
 webdriver-manager
 gunicorn
-chromedriver-binary-auto
 undetected-chromedriver
