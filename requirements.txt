@@ -1,4 +1,4 @@
 flask
-selenium
-chromedriver-autoinstaller
+requests
+beautifulsoup4
 gunicorn
