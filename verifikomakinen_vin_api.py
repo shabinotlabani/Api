@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
+@app.route("/")
+def index():
+    return jsonify({"status": "ok", "message": "VerifikoMakinen API eshte aktiv!"})
+
 @app.route("/check-vin")
 def check_vin():
     vin = request.args.get("vin", "").strip()
@@ -19,12 +23,7 @@ def check_vin():
         }
 
         session = requests.Session()
-        session.post(
-            "https://www.carhistory.or.kr/main.car",
-            data={"lang": "en"},
-            headers=headers,
-            timeout=10
-        )
+        session.post("https://www.carhistory.or.kr/main.car", data={"lang": "en"}, headers=headers, timeout=10)
         session.cookies.set("search_agree", "Y", domain="www.carhistory.or.kr")
 
         url = "https://www.carhistory.or.kr/search/carhistory/freeSearch.car"
@@ -34,26 +33,22 @@ def check_vin():
         soup = BeautifulSoup(response.text, "html.parser")
         text = soup.get_text(" ", strip=True).lower()
 
-        # 🔍 Kontrollo rastet
         if "error in the vin" in text:
-            result = "❌ Numri VIN eshte i pasakte"
+            result = "❌ Numri VIN eshte i pasakte."
         elif "no history on the flood damage accident" in text:
-            result = "✅ Nuk ka histori përmbytjeje"
+            result = "✅ Nuk ka histori permbytjeje ne Korene e Jugut."
         elif "flood" in text or "damage" in text:
-            result = "⚠️ Ka histori permbytjeje"
+            result = "⚠️ Ka histori permbytjeje."
         else:
-            result = "ℹ️ Nuk u gjet informacion i qarte"
+            result = "ℹ️ Nuk u gjet informacion i qarte."
 
         return jsonify({
             "vin": vin,
             "result": result,
             "status": "success"
         })
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
-
